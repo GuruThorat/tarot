@@ -281,6 +281,56 @@
     mix-blend-mode:screen;
   }
   .reading:hover .glare{opacity:1}
+
+  /* ---------- interactive card draw ---------- */
+  .draw-controls{display:flex;flex-direction:column;align-items:center;gap:18px;margin-bottom:8px}
+  .spread-tabs{display:inline-flex;border:1px solid var(--line);border-radius:32px;overflow:hidden;background:rgba(11,9,23,.4)}
+  .spread-tabs button{
+    background:transparent;color:var(--parchment-dim);border:0;padding:.72em 1.5em;
+    font-family:var(--body);font-size:.88rem;letter-spacing:.08em;cursor:pointer;transition:color .25s,background .25s;
+  }
+  .spread-tabs button.active{background:linear-gradient(180deg,var(--gold-2),var(--gold));color:var(--midnight-deep)}
+  .draw-hint{text-align:center;color:var(--parchment-dim);font-style:italic;margin:2px auto 18px;max-width:540px}
+  .tableau{display:flex;gap:34px;justify-content:center;flex-wrap:wrap;perspective:1600px;min-height:380px;align-items:flex-start}
+  .slot{width:212px;display:flex;flex-direction:column;align-items:center}
+  .slot .pos{font-size:.74rem;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;height:1em}
+  .tcard{width:200px;height:344px;position:relative;cursor:pointer}
+  .tcard.dealing{animation:deal .6s ease both}
+  @keyframes deal{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:translateY(0)}}
+  .tcard-inner{
+    position:absolute;inset:0;transform-style:preserve-3d;
+    transition:transform .85s cubic-bezier(.2,.85,.25,1);
+  }
+  .tcard.flipped .tcard-inner{transform:rotateY(180deg)}
+  .tcard .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:11px;overflow:hidden}
+  .tcard .back{
+    border:1px solid var(--line-strong);
+    background:radial-gradient(120% 90% at 50% 12%,rgba(45,38,92,.9),#0b0917 78%);
+    box-shadow:0 18px 44px -20px rgba(0,0,0,.85);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .tcard .back::before{content:"";position:absolute;inset:9px;border:1px solid var(--line);border-radius:7px}
+  .tcard .back::after{
+    content:"";position:absolute;width:120px;height:120px;border-radius:50%;
+    border:1px solid var(--line);box-shadow:0 0 0 8px rgba(198,160,82,.06),inset 0 0 0 8px rgba(198,160,82,.06);
+  }
+  .tcard .back svg{width:78px;height:78px;position:relative;z-index:1}
+  .tcard .front{
+    transform:rotateY(180deg);background:#0b0917;border:1px solid var(--line-strong);
+    box-shadow:0 18px 44px -20px rgba(0,0,0,.85);
+  }
+  .tcard .front img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .4s}
+  .tcard .front img.rev{transform:rotate(180deg)}
+  .tcard:hover .tcard-inner{filter:none}
+  .tcard:hover{box-shadow:0 0 34px -4px rgba(227,201,135,.28);border-radius:11px}
+  .meaning{width:212px;margin-top:18px;text-align:center;opacity:0;transform:translateY(8px);transition:opacity .6s ease,transform .6s ease}
+  .meaning.show{opacity:1;transform:none}
+  .meaning .nm{font-family:var(--display);font-size:1.35rem;color:var(--parchment);line-height:1.1}
+  .meaning .or{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-2);margin:.35em 0 .55em}
+  .meaning p{font-size:.92rem;color:var(--parchment-dim);margin:0;line-height:1.5}
+  .draw-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  @media (max-width:880px){ .tableau{gap:22px} .tcard{width:150px;height:258px} .slot{width:160px} .meaning{width:170px} }
+  @media (prefers-reduced-motion:reduce){ .tcard{transition:none} .tcard.dealing{animation:none} }
 </style>
 </head>
 <body>
@@ -295,6 +345,7 @@
     <a href="#top" class="brand"><span class="star">✦</span> The Golden Moon</a>
     <nav>
       <ul class="nav-links" id="navlinks">
+        <li><a href="#draw">Draw a Card</a></li>
         <li><a href="#about">The Reader</a></li>
         <li><a href="#readings">Readings</a></li>
         <li><a href="#process">How It Works</a></li>
@@ -340,6 +391,33 @@
       </div>
     </div>
     <div class="rule-stars">✦ ✦ ✦</div>
+  </div>
+</section>
+
+<!-- ============================== DRAW A CARD ============================== -->
+<section id="draw">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow"><span class="num">X</span> · The Wheel — A Glimpse</div>
+      <h2>Draw a Card</h2>
+    </div>
+    <div class="draw-controls reveal">
+      <div class="spread-tabs" id="spreadTabs" role="tablist" aria-label="Choose a spread">
+        <button data-spread="one" role="tab">Single Card</button>
+        <button data-spread="three" class="active" role="tab">Past · Present · Future</button>
+      </div>
+      <p class="draw-hint" id="drawHint">Take a breath, hold your question lightly, then shuffle the deck. Click any card to turn it.</p>
+    </div>
+
+    <div class="tableau" id="tableau" aria-live="polite"></div>
+
+    <div class="draw-actions reveal">
+      <button class="btn" id="drawBtn">Shuffle &amp; Draw</button>
+      <a href="#book" class="btn ghost">Book a Full Reading</a>
+    </div>
+    <p style="text-align:center;margin-top:26px;color:rgba(244,234,208,.42);font-style:italic;font-size:.85rem">
+      A mirror for reflection, offered for fun — not a forecast. Imagery: the public-domain Rider–Waite–Smith deck (Pamela Colman Smith, 1909).
+    </p>
   </div>
 </section>
 
@@ -726,6 +804,106 @@
       }
       render();
     } catch (e) { /* keep the SVG emblem fallback */ }
+  })();
+
+  /* ---------- interactive tarot draw (Rider–Waite–Smith Major Arcana) ---------- */
+  (function () {
+    const tableau = document.getElementById('tableau');
+    if (!tableau) return;
+
+    const ARCANA = [
+      { n:'0',    name:'The Fool',           f:'cards/00-fool.jpg',            up:'Fresh starts and leaps of faith — trusting the road before you can see all of it.', rev:'Hesitation, recklessness, or fear of taking the first step.' },
+      { n:'I',    name:'The Magician',       f:'cards/01-magician.jpg',        up:'You already hold the tools you need; focus your will and begin.', rev:'Scattered energy or talent left untapped.' },
+      { n:'II',   name:'The High Priestess', f:'cards/02-high-priestess.jpg',  up:'Trust your intuition — the answer is quieter than you think.', rev:'An inner voice ignored; surface chosen over depth.' },
+      { n:'III',  name:'The Empress',        f:'cards/03-empress.jpg',         up:'Nurture, abundance, and creative growth are within reach.', rev:'Neglecting yourself or your work; a creative block.' },
+      { n:'IV',   name:'The Emperor',        f:'cards/04-emperor.jpg',         up:'Structure and steadiness; take responsible charge.', rev:'Rigidity or control — time to loosen your grip.' },
+      { n:'V',    name:'The Hierophant',     f:'cards/05-hierophant.jpg',      up:'Guidance and tradition; learn from trusted sources.', rev:'Questioning the rules and finding your own way.' },
+      { n:'VI',   name:'The Lovers',         f:'cards/06-lovers.jpg',          up:'Connection and alignment; a choice made from the heart.', rev:'Imbalance or values out of step.' },
+      { n:'VII',  name:'The Chariot',        f:'cards/07-chariot.jpg',         up:'Drive and discipline carry you through — hold the reins.', rev:'Stalled momentum; pulled in two directions.' },
+      { n:'VIII', name:'Strength',           f:'cards/08-strength.jpg',        up:'Quiet courage and patience tame what feels overwhelming.', rev:'Self-doubt or depleted reserves; forcing it.' },
+      { n:'IX',   name:'The Hermit',         f:'cards/09-hermit.jpg',          up:'Step back, reflect, and let your own wisdom surface.', rev:'Isolation, or avoiding the answers within.' },
+      { n:'X',    name:'Wheel of Fortune',   f:'cards/10-wheel-of-fortune.jpg',up:'Cycles turn; a shift in luck and timing arrives.', rev:'Resisting change, or a run of hard breaks.' },
+      { n:'XI',   name:'Justice',            f:'cards/11-justice.jpg',         up:'Truth, fairness, and the weight of your choices.', rev:'Avoidance or imbalance; accountability deferred.' },
+      { n:'XII',  name:'The Hanged Man',     f:'cards/12-hanged-man.jpg',      up:'A pause and a new angle reveal what rushing hides.', rev:'Stalling, or clinging to an old point of view.' },
+      { n:'XIII', name:'Death',              f:'cards/13-death.jpg',           up:'An ending clears the way — transformation, not doom.', rev:'Resisting a needed close; holding on too long.' },
+      { n:'XIV',  name:'Temperance',         f:'cards/14-temperance.jpg',      up:'Balance and patience; blend opposites with care.', rev:'Excess or friction — time to recalibrate.' },
+      { n:'XV',   name:'The Devil',          f:'cards/15-devil.jpg',           up:'Naming what binds you is the first step to freedom.', rev:'Releasing a habit and reclaiming your power.' },
+      { n:'XVI',  name:'The Tower',          f:'cards/16-tower.jpg',           up:'Sudden change clears shaky ground for something truer.', rev:'Disaster averted, or a slow unraveling.' },
+      { n:'XVII', name:'The Star',           f:'cards/17-star.jpg',            up:'Hope and healing; faith renewed after a hard stretch.', rev:'Doubt or disconnection; optimism dimmed.' },
+      { n:'XVIII',name:'The Moon',           f:'cards/18-moon.jpg',            up:'Trust the path through uncertainty — not all is clear yet.', rev:'Confusion lifting; calmer waters ahead.' },
+      { n:'XIX',  name:'The Sun',            f:'cards/19-sun.jpg',             up:'Warmth, clarity, and well-earned joy.', rev:'Passing clouds; brightness still worth reaching for.' },
+      { n:'XX',   name:'Judgement',          f:'cards/20-judgement.jpg',       up:'A reckoning and a calling; rise to the next chapter.', rev:'Self-doubt, or a lesson not yet heard.' },
+      { n:'XXI',  name:'The World',          f:'cards/21-world.jpg',           up:'Completion and wholeness; a cycle fulfilled.', rev:'So close — one loose thread to tie before you arrive.' }
+    ];
+    const SPREADS = { one: ['Your Card'], three: ['Past', 'Present', 'Future'] };
+    const BACK_SVG = '<svg viewBox="0 0 100 100" fill="none" aria-hidden="true"><g stroke="#e3c987" stroke-width="1.1"><circle cx="50" cy="50" r="30" stroke-dasharray="2 5"/><circle cx="50" cy="50" r="16"/></g><path d="M50 34a16 16 0 1 0 0 32 12 12 0 0 1 0-32z" fill="#c6a052"/><g stroke="#e3c987" stroke-width="1"><line x1="50" y1="8" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="92"/><line x1="8" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="92" y2="50"/></g></svg>';
+
+    const btn = document.getElementById('drawBtn');
+    const hint = document.getElementById('drawHint');
+    const tabs = document.getElementById('spreadTabs');
+    const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+    let spread = 'three';
+    let busy = false;
+
+    tabs.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b || busy) return;
+      spread = b.dataset.spread;
+      [...tabs.children].forEach(c => c.classList.toggle('active', c === b));
+      tableau.innerHTML = '';
+      btn.textContent = 'Shuffle & Draw';
+    });
+
+    function shuffle(a) { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; }
+
+    function buildCard(card, reversed) {
+      const wrap = document.createElement('div'); wrap.className = 'tcard';
+      const inner = document.createElement('div'); inner.className = 'tcard-inner';
+      const back = document.createElement('div'); back.className = 'face back'; back.innerHTML = BACK_SVG;
+      const front = document.createElement('div'); front.className = 'face front';
+      const img = document.createElement('img');
+      img.src = card.f; img.alt = card.name + (reversed ? ', reversed' : ''); img.loading = 'lazy';
+      if (reversed) img.classList.add('rev');
+      front.appendChild(img); inner.append(back, front); wrap.appendChild(inner);
+      wrap.addEventListener('click', () => wrap.classList.toggle('flipped'));
+      return wrap;
+    }
+
+    function deal() {
+      if (busy) return;
+      busy = true;
+      const positions = SPREADS[spread];
+      const picks = shuffle(ARCANA).slice(0, positions.length);
+      tableau.innerHTML = '';
+      hint.textContent = 'Shuffling the deck…';
+
+      const slots = positions.map((label, i) => {
+        const slot = document.createElement('div'); slot.className = 'slot';
+        const pos = document.createElement('div'); pos.className = 'pos'; pos.textContent = positions.length > 1 ? label : '';
+        const reversed = Math.random() < 0.32;
+        const card = buildCard(picks[i], reversed);
+        const meaning = document.createElement('div'); meaning.className = 'meaning';
+        meaning.innerHTML = '<div class="nm">' + picks[i].name + '</div>' +
+          '<div class="or">' + picks[i].n + ' · ' + (reversed ? 'Reversed' : 'Upright') + '</div>' +
+          '<p>' + (reversed ? picks[i].rev : picks[i].up) + '</p>';
+        slot.append(pos, card, meaning);
+        if (!reduce) { card.classList.add('dealing'); card.style.animationDelay = (i * 0.12) + 's'; }
+        tableau.appendChild(slot);
+        return { card, meaning };
+      });
+
+      const flipAll = () => {
+        hint.textContent = 'Click any card to turn it over again.';
+        slots.forEach((s, i) => {
+          const t = reduce ? 0 : 400 + i * 320;
+          setTimeout(() => { s.card.classList.add('flipped'); setTimeout(() => s.meaning.classList.add('show'), reduce ? 0 : 450); }, t);
+        });
+        const total = reduce ? 0 : 400 + slots.length * 320 + 500;
+        setTimeout(() => { busy = false; btn.textContent = 'Draw Again'; }, total);
+      };
+      setTimeout(flipAll, reduce ? 0 : 650);
+    }
+
+    btn.addEventListener('click', deal);
   })();
 </script>
 
